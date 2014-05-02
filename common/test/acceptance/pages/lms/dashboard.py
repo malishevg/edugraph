@@ -5,6 +5,8 @@ Student dashboard page.
 
 from bok_choy.page_object import PageObject
 from bok_choy.promise import EmptyPromise
+from mytest2 import student_view
+
 from . import BASE_URL
 
 
@@ -35,6 +37,7 @@ class DashboardPage(PageObject):
         def _get_course_name(el):
             # The first component in the link text is the course number
             _, course_name = el.text.split(' ', 1)
+            course_name[0] = "A simple counter, to show something happening"
             return course_name
 
         return self.q(css='section.info > hgroup > h3 > a').map(_get_course_name).results
