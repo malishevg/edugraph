@@ -10,8 +10,7 @@ import uuid
 import time
 from collections import defaultdict
 from pytz import UTC
-from mytest2 import student_view
-from XBlock.core import XBlock
+from __builtin__ import xrange
 
 from django.conf import settings
 from django.contrib.auth import logout, authenticate, login
@@ -89,7 +88,10 @@ from util.password_policy_validators import (
 )
 
 from third_party_auth import pipeline, provider
-from mytest2.mytest2 import XBlockTest2
+from nose.tools import assert_equals, assert_in
+from xblock.runtime import DictKeyValueStore, KvsFieldData
+from common.djangoapps.student.tests.view_counter import ViewCounter
+import unittest.mock
 
 log = logging.getLogger("edx.student")
 AUDIT_LOG = logging.getLogger("audit")
@@ -453,26 +455,20 @@ def complete_course_mode_info(course_id, enrollment):
 @login_required
 @ensure_csrf_cookie
 def dashboard(request):
-    xt2 = XBlockTest2()
-    return xt2.student_view()
-"""
-   context = {
-    }
-    template_context = {
-        'xblock_context': context,
-        'xblock': xblock,
-    }
-    if xblock.category == 'vertical':
-        template = 'studio_vertical_wrapper.html'
-    elif xblock.location != context.get('root_xblock').location and xblock.has_children:
-        template = 'container_xblock_component.html'
-    else:
-        template = 'studio_xblock_wrapper.html'
-    html = render_to_string(template, template_context)
-    frag = wrap_fragment(frag, html)
-    return frag
-
     user = request.user
+
+    key_store = DictKeyValueStore()
+    db_model = KvsFieldData(key_store)
+    tester = ViewCounter(unittest.mock.Mock(), db_model, unittest.mock.Mock())
+
+    assert_equals(tester.views, 0)
+
+    # View the XBlock five times
+    for i in xrange(5):
+        generated_html = tester.student_view({})
+        # Make sure the html fragment we're expecting appears in the body_html
+        assert_in('<span class="views">{0}</span>'.format(i + 1), generated_html.body_html())
+        assert_equals(tester.views, i + 1)
 
     # for microsites, we want to filter and only show enrollments for courses within
     # the microsites 'ORG'
@@ -591,7 +587,6 @@ def dashboard(request):
         context['provider_user_states'] = pipeline.get_provider_user_states(user)
 
     return render_to_response('dashboard.html', context)
-    """
 
 
 def try_change_enrollment(request):
