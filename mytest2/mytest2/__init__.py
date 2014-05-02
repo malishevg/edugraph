@@ -1,0 +1,1 @@
+from .mytest2 import XBlockTest2
